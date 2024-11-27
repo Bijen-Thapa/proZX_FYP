@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registration</title>
+  </head>
+  <body>
+    <div class="wrapper">
+      <h2>Registration</h2>
+      <form action="/auth/register" method="post">
+        <div class="input-box">
+          <label for="Name">Name:</label><br />
+          <input type="text" placeholder="Enter your name" name="userName" />
+        </div>
+        <div class="input-box">
+          <label for="">Email:</label><br />
+          <input type="email" placeholder="Enter your email" name="email" />
+        </div>
+        <div class="input-box">
+          <label for="">Phone No:</label><br />
+          <input type="tel" placeholder="Phone number" name="phone" />
+        </div>
+        <div class="input-box">
+          <label for="">Address:</label><br />
+          <input type="text" placeholder="Address" name="address" />
+        </div>
+        <div class="input-box">
+          <label for="">Password:</label><br />
+          <input
+            type="password"
+            placeholder="Create password"
+            name="password"
+          />
+        </div>
+
+        <div class="input-box button">
+          <input type="Submit" value="Register Now" />
+        </div>
+        <div class="text">
+          <h3>Already have an account? <a href="/">Login now</a></h3>
+        </div>
+      </form>
+    </div>
+  </body>
+</html>
