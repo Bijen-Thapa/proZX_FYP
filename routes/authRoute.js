@@ -6,6 +6,8 @@ const bcrypt = require("bcryptjs");
 // INSERT INTO testUser1 (username, email, phoneno, address)
 // VALUES ('asd', 'email', '123', 'address');
 
+const jwt = require("jsonwebtoken");
+
 const pg = require("pg");
 const { log } = require("async");
 const { Client } = pg;
@@ -13,97 +15,110 @@ const { Client } = pg;
 const { connectDB } = require("../config/dbConfig");
 const send = require("send");
 const { json } = require("body-parser");
+const table = require("../config/queries.json");
 
-router.post("/register", async (req, res) => {
-  const { userName, email, phone, address, password } = req.body;
+router.post(
+	"/register",
 
-  const salt = await bcrypt.genSalt(10);
-  let encPassword = await bcrypt.hash(password, salt);
-  connectDB.connect();
+	async (req, res, next) => {
+		const { userName, email, phone, address, password } = req.body;
 
-  const insert =
-    "INSERT INTO testUser1 (username, email, phoneno, address, password) VALUES (";
-  let query =
-    insert +
-    "'" +
-    userName +
-    "','" +
-    email +
-    "','" +
-    phone +
-    "','" +
-    address +
-    "','" +
-    encPassword +
-    "');";
-  // console.log(typeof query);
-  // res.send(query);
-  let result = await connectDB
-    .query(query)
-    .then(res.send("Account Created Successfully!"));
-  // res.redirect("login");
-});
+		const salt = await bcrypt.genSalt(10);
+		let encPassword = await bcrypt.hash(password, salt);
+		connectDB.connect();
+
+		const insert = table.INSERT_NEW_USER;
+		let values = [userName, email, phone, address, encPassword];
+		// console.log(typeof query);
+		// res.send(query);
+
+		let result = await connectDB.query(insert, values, (err, result) => {
+			if (err) {
+				// console.error('Error inserting data', err);
+				console.log(err);
+				res.send(err);  
+			} else {
+				console.log("Account Created Successfully!");
+				// res.redirect("login");
+				// next();
+			}
+		});
+	}
+);
 
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  connectDB.connect();
+	const { email, password } = req.body;
 
-  let validPass = await connectDB.query(
-    "SELECT password FROM testUser1 where email = '" + email + "';"
-  );
 
-  console.log(validPass.rows[0]);
 
-  // return res.json(validPass.rows);
-  const correctPass = await bcrypt.compare(
-    password,
-    validPass.rows[0].password
-  );
+	const insert = table.SELECT_USER;
+	connectDB.connect();
+	const values = [email];
+	console.log(values);
+	
+	let validPass = await connectDB.query(insert, values);
+	console.log(validPass.rows);
 
-  console.log(correctPass);
+	if (validPass.rows.length == 0) {
+		// connectDB.end();
+		return res.send("invalid email or password");
+	}
 
-  if (correctPass) {
-    const infor = await connectDB.query(
-      "SELECT * FROM testuser1 WHERE email = '" + email + "';"
-    );
-    // connectDB.end();
-    const info = infor.rows[0];
 
-    res.render("profile", { info });
-  } else {
-    // connectDB.end();
-    res.send("invalid email or password");
-  }
+	// return res.json(validPass.rows);
+	const correctPass = await bcrypt.compare(
+		password,
+		validPass.rows[0].password
+	);
+
+	if (correctPass) {
+		const infor = await connectDB.query(table.SELECT_USER, [email]);
+		// connectDB.end();
+		const info = infor.rows[0];	
+		const token = jwt.sign({ email }, process.env.JWT_SECRET, {expiresIn: "1h"});
+
+		res.cookie("token", token, {
+			httpOnly: true,
+			maxAge: 1000 * 60 * 60,
+		});
+		// res.send("Login Successful");
+		res.render("profile", { info });
+	} else {
+		// connectDB.end();
+		res.send("invalid email or password");
+	}
 });
 
 router.post("/update", async (req, res) => {
-  const { id, action } = req.body;
-  const { userName, email, phoneNo, address } = req.body;
-  if (action == "update") {
-    connectDB.connect().then(() => {
-      connectDB
-        .query(
-          "UPDATE testUser1 SET email = '" +
-            email +
-            "', username = '" +
-            userName +
-            "', phoneno = '" +
-            phoneNo +
-            "', address = '" +
-            address +
-            "' WHERE userid = " +
-            id +
-            ";"
-        )
-        .then(res.send("Account detail updated successfully!"));
-    });
-  } else {
-    connectDB.connect().then(() => {
-      connectDB
-        .query("DELETE FROM testUser1 WHERE userid = " + id + ";")
-        .then(res.send("Account deleted successfully!"));
-    });
-  }
+	const { id, action } = req.body;
+	const { userName, email, phoneNo, address } = req.body;
+	if (action == "update") {
+		connectDB.connect().then(() => {
+			connectDB
+				.query(table.UPDATE_USER, [userName, phoneNo, address, email])
+				.then(res.send("Account detail updated successfully!"));
+		});
+	} else {
+		const del = table.DELETE_USER;
+		const values = [id];
+		connectDB.connect().then(() => {
+			connectDB
+				// .query("DELETE FROM testUser1 WHERE userid = " + id + ";")
+				.query(del, values)
+				.then(res.send("Account deleted successfully!"));
+		});
+	}
 });
 
 module.exports = router;
+
+// const insert =
+// 			'INSERT INTO employees(column1, column2) VALUES (value1, value2)';
+// 		const values = ['value1', 'value2'];
+
+// client.query(insert, values, (err, result) => {
+// 	if (err) {
+// 		console.error('Error inserting data', err);
+// 	} else {
+// 		console.log('Data inserted successfully');
+// 	}

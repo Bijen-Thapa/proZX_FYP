@@ -11,6 +11,7 @@ const authRoutes = require("./routes/authRoute");
 // const { authenticateJWT } = require("./middleware/authMiddleware");
 const app = express();
 const cookieParser = require("cookie-parser");
+const cors = require("cors");
 app.use(cookieParser());
 
 dotenv.config();
@@ -18,6 +19,8 @@ dotenv.config();
 app.set("view engine", "ejs");
 
 app.use(express.static("views"));
+
+app.use(cors()); // cors enables ports to communicate with each other
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -36,13 +39,22 @@ app.use("/uploads", express.static("./uploads"));
 // app.use(express.static("./uploads"));
 
 // app.use(errorHandler);
+const { cookieSet } = require("./middlewares/cookiesSet");
+app.use(cookieSet);
 
-app.get("/", (req, res) => {
-  res.render("login");
+app.get("/", async (req, res) => {
+	res.render("esewa");
+});
+
+app.get("/login", (req, res) => {
+	res.render("login");
 });
 
 app.get("/signup", (req, res) => {
-  res.render("registration");
+	res.render("registration");
+});
+app.get("/test", (req, res) => {
+	res.json("testing123");
 });
 
 module.exports = app;

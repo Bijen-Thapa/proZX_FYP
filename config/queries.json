@@ -1,0 +1,7 @@
+{
+    "INSERT_NEW_USER": "INSERT INTO users (username, email, phoneno, address, password) VALUES ($1, $2, $3, $4, $5) RETURNING *;",
+    "SELECT_USER_Pass": "SELECT * FROM users WHERE email = $1;",
+    "SELECT_USER": "SELECT * FROM users WHERE email = $1;",
+    "UPDATE_USER": "UPDATE users SET username = $1, phoneno = $2, address = $3 WHERE email = $4;",
+    "DELETE_USER": "DELETE FROM users WHERE userid = $1;"
+}
