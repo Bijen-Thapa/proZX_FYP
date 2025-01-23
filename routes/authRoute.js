@@ -17,6 +17,9 @@ const send = require("send");
 const { json } = require("body-parser");
 const table = require("../config/queries.json");
 
+// const { verifyMail } = require("../middlewares/emailVerification");
+const { sendMail } = require("../middlewares/sendMail");
+
 router.post(
 	"/register",
 
@@ -36,7 +39,7 @@ router.post(
 			if (err) {
 				// console.error('Error inserting data', err);
 				console.log(err);
-				res.send(err);  
+				res.send(err);
 			} else {
 				console.log("Account Created Successfully!");
 				// res.redirect("login");
@@ -49,13 +52,11 @@ router.post(
 router.post("/login", async (req, res) => {
 	const { email, password } = req.body;
 
-
-
 	const insert = table.SELECT_USER;
 	connectDB.connect();
 	const values = [email];
 	console.log(values);
-	
+
 	let validPass = await connectDB.query(insert, values);
 	console.log(validPass.rows);
 
@@ -63,7 +64,6 @@ router.post("/login", async (req, res) => {
 		// connectDB.end();
 		return res.send("invalid email or password");
 	}
-
 
 	// return res.json(validPass.rows);
 	const correctPass = await bcrypt.compare(
@@ -74,8 +74,10 @@ router.post("/login", async (req, res) => {
 	if (correctPass) {
 		const infor = await connectDB.query(table.SELECT_USER, [email]);
 		// connectDB.end();
-		const info = infor.rows[0];	
-		const token = jwt.sign({ email }, process.env.JWT_SECRET, {expiresIn: "1h"});
+		const info = infor.rows[0];
+		const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+			expiresIn: "1h",
+		});
 
 		res.cookie("token", token, {
 			httpOnly: true,
@@ -108,6 +110,22 @@ router.post("/update", async (req, res) => {
 				.then(res.send("Account deleted successfully!"));
 		});
 	}
+});
+
+router.post("/forgot", async (req, res) => {
+	const { email } = req.body;
+	const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+		expiresIn: "1h",
+	});
+	const mailOptions = {
+		to: email,
+		subject: "Reset Password",
+		text: `Please click on the link to reset your password: http://localhost:3000/reset/${token}`,
+	};
+	sendMail(email, "Reset Password", mailOptions.text);
+	res.send("Email sent successfully");
+
+	// res.send("aaa");
 });
 
 module.exports = router;

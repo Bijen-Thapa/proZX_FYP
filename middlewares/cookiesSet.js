@@ -11,7 +11,7 @@ const cookieSet = async (req, res, next) => {
 		const token = { id: null, role: "guest" };
 		// const token = jwt.sign({ id: null, role: "guest" }, secret);
 		res.cookie("token", token, {
-			maxAge: 60 * 30,
+			maxAge: 60 * 30, // expires in 30 min
 		});
 		// res.cookie("token", token, {
 		// 	httpOnly: true,
@@ -24,17 +24,14 @@ const cookieSet = async (req, res, next) => {
 		console.log(reCookie);
 		next();
 	} else {
-		const token = { id: null, role: "ttt" };
+		const token = { id: null, role: "guest" };
 		// // const token = jwt.sign({ id: null, role: "guest" }, secret);
 		res.cookie("token", token, {
-			maxAge: 60 * 30,
+			maxAge: 60 * 30, // expires in 30 min
 		});
 		await console.log("stat");
 		console.log(reCookie);
 
-		// res.cookie("token", token, {
-		// 	maxAge: 60 * 30,
-		// });
 		next();
 	}
 };

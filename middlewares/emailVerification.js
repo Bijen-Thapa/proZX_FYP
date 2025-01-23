@@ -3,14 +3,14 @@ const jwt = require("jsonwebtoken");
 
 require("dotenv").config();
 
-const verifyMail = (req, res, next) => {
+const verifyMail = async (req, res, next) => {
 	console.log("eeee", process.env.EMAIL, process.env.EMAIL_PASS);
 
 	const transporter = mailer.createTransport({
 		service: "gmail",
-		host: "smtp.gmail.com",
-		port: 587,
-		secure: false,
+		// host: "smtp.gmail.com",
+		// port: 587,
+		// secure: true,
 		auth: {
 			user: process.env.EMAIL,
 			pass: process.env.EMAIL_PASS,
@@ -47,16 +47,25 @@ const verifyMail = (req, res, next) => {
            Thanks`,
 	};
 
-	transporter.sendMail(mailConfigurations, (error, info) => {
-		// if (error) throw Error(error);
+	transporter.verify((error, success) => {
 		if (error) {
 			console.log(error);
 		} else {
-			console.log("Email Sent Successfully");
-			console.log(info);
+			console.log("Server is ready to take messages");
 		}
 	});
 
+	// transporter.sendMail(mailConfigurations, (error, info) => {
+	// 	// if (error) throw Error(error);
+	// 	if (error) {
+	// 		console.log(error);
+	// 	} else {
+	// 		console.log("Email Sent Successfully");
+	// 		console.log(info);
+	// 	}
+	// });
+
 	next();
 };
-module.exports = verifyMail;
+
+module.exports = { verifyMail };

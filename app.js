@@ -40,10 +40,15 @@ app.use("/uploads", express.static("./uploads"));
 
 // app.use(errorHandler);
 const { cookieSet } = require("./middlewares/cookiesSet");
+// const { sendMail } = require("./middlewares/sendMail");
 app.use(cookieSet);
 
+// const { send } = require("./middlewares/nodeMailer");
+const { sendMail } = require("./middlewares/sendMail");
+
 app.get("/", async (req, res) => {
-	res.render("esewa");
+	// res.send(send());
+	res.render("forgot");
 });
 
 app.get("/login", (req, res) => {
@@ -52,6 +57,10 @@ app.get("/login", (req, res) => {
 
 app.get("/signup", (req, res) => {
 	res.render("registration");
+});
+
+app.get("/forgot", (req, res) => {
+	res.render("forgot");
 });
 app.get("/test", (req, res) => {
 	res.json("testing123");
