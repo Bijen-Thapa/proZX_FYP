@@ -17,15 +17,19 @@ const send = require("send");
 const { json } = require("body-parser");
 const table = require("../config/queries.json");
 
+const { JWTverification } = require("../middlewares/verifyJWT");
+
 // const { verifyMail } = require("../middlewares/emailVerification");
 const { sendMail } = require("../middlewares/sendMail");
+const status = require("statuses");
 
-router.post(
-	"/register",
-
-	async (req, res, next) => {
+const {
+	validateRegistration,
+	validateLogin,
+} = require("../middlewares/validator");
+router.post("/register", validateRegistration, async (req, res, next) => {
+	try {
 		const { userName, email, phone, address, password } = req.body;
-
 		const salt = await bcrypt.genSalt(10);
 		let encPassword = await bcrypt.hash(password, salt);
 		connectDB.connect();
@@ -42,56 +46,80 @@ router.post(
 				res.send(err);
 			} else {
 				console.log("Account Created Successfully!");
+				const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+					expiresIn: "1h",
+				});
+				res.send(token);
+				// res.json({
+				// 	status: 200,
+				// 	message: "success",
+				// });
+
 				// res.redirect("login");
 				// next();
 			}
 		});
-	}
-);
-
-router.post("/login", async (req, res) => {
-	const { email, password } = req.body;
-
-	const insert = table.SELECT_USER;
-	connectDB.connect();
-	const values = [email];
-	console.log(values);
-
-	let validPass = await connectDB.query(insert, values);
-	console.log(validPass.rows);
-
-	if (validPass.rows.length == 0) {
-		// connectDB.end();
-		return res.send("invalid email or password");
-	}
-
-	// return res.json(validPass.rows);
-	const correctPass = await bcrypt.compare(
-		password,
-		validPass.rows[0].password
-	);
-
-	if (correctPass) {
-		const infor = await connectDB.query(table.SELECT_USER, [email]);
-		// connectDB.end();
-		const info = infor.rows[0];
-		const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-			expiresIn: "1h",
+	} catch (err) {
+		res.json({
+			status: 400,
+			message: err.message,
 		});
-
-		res.cookie("token", token, {
-			httpOnly: true,
-			maxAge: 1000 * 60 * 60,
-		});
-		// res.send("Login Successful");
-		res.render("profile", { info });
-	} else {
-		// connectDB.end();
-		res.send("invalid email or password");
 	}
 });
 
-router.post("/update", async (req, res) => {
+router.post("/login", validateLogin, async (req, res) => {
+	try {
+		const { email, password } = req.body;
+
+		const insert = table.SELECT_USER;
+		connectDB.connect();
+		const values = [email];
+		console.log("xx", values);
+
+		let validPass = await connectDB.query(insert, values);
+		console.log(validPass.rows);
+
+		if (validPass.rows.length == 0) {
+			// connectDB.end();
+			return res.send("invalid email or password");
+		}
+
+		// return res.json(validPass.rows);
+		const correctPass = await bcrypt.compare(
+			password,
+			validPass.rows[0].password
+		);
+
+		if (correctPass) {
+			const infor = await connectDB.query(table.SELECT_USER, [email]);
+			// connectDB.end();
+			const info = infor.rows[0];
+			const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+				expiresIn: "1h",
+			});
+
+			res.cookie("token", token, {
+				httpOnly: true,
+				maxAge: 1000 * 60 * 60,
+			});
+			res.token = token;
+			console.log("eeee", res.token);
+			res.json({ aa: "aaa", token: token });
+			// res.send("Login Successful");
+			// res.render("profile", { info });
+		} else {
+			// connectDB.end();
+			res.send("invalid email or password");
+		}
+	} catch (err) {
+		res.json({
+			status: 400,
+			message: err.message,
+		});
+	}
+});
+
+router.post("/update", JWTverification, async (req, res) => {
 	const { id, action } = req.body;
 	const { userName, email, phoneNo, address } = req.body;
 	if (action == "update") {
@@ -112,7 +140,7 @@ router.post("/update", async (req, res) => {
 	}
 });
 
-router.post("/forgot", async (req, res) => {
+router.post("/forgot", JWTverification, async (req, res) => {
 	const { email } = req.body;
 	const token = jwt.sign({ email }, process.env.JWT_SECRET, {
 		expiresIn: "1h",
