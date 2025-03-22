@@ -9,10 +9,10 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const pg = require("pg");
-const { log } = require("async");
+const { log, nextTick } = require("async");
 const { Client } = pg;
 
-const { connectDB } = require("../config/dbConfig");
+const { client, pool } = require("../config/dbConfig");
 const send = require("send");
 const { json } = require("body-parser");
 const table = require("../config/queries.json");
@@ -27,38 +27,56 @@ const {
 	validateRegistration,
 	validateLogin,
 } = require("../middlewares/validator");
-router.post("/register", validateRegistration, async (req, res, next) => {
+// router.post("/register", validateRegistration, async (req, res, next) => {
+router.post("/register", async (req, res, next) => {
 	try {
 		const { userName, email, phone, address, password } = req.body;
 		const salt = await bcrypt.genSalt(10);
 		let encPassword = await bcrypt.hash(password, salt);
-		connectDB.connect();
+		let result = null;
+		pool.connect().then(async () => {
+			const insert = table.INSERT_NEW_USER;
+			let values = [userName, email, phone, address, encPassword];
 
-		const insert = table.INSERT_NEW_USER;
-		let values = [userName, email, phone, address, encPassword];
-		// console.log(typeof query);
-		// res.send(query);
-
-		let result = await connectDB.query(insert, values, (err, result) => {
-			if (err) {
-				// console.error('Error inserting data', err);
-				console.log(err);
-				res.send(err);
-			} else {
-				console.log("Account Created Successfully!");
-				const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-					expiresIn: "1h",
-				});
-				res.send(token);
-				// res.json({
-				// 	status: 200,
-				// 	message: "success",
-				// });
-
-				// res.redirect("login");
-				// next();
-			}
+			result = await pool.query(insert, values, (err, result) => {
+				if (err) {
+					console.log("Adding new user failed");
+					res.json({ status: 400, message: err.detail });
+				} else {
+					console.log("new user added successfully");
+					const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+						expiresIn: "1h",
+					});
+					res.json({ message: "success", token: token, status: 200 });
+				}
+			});
 		});
+
+		// const insert = table.INSERT_NEW_USER;
+		// let values = [userName, email, phone, address, encPassword];
+		// // console.log(typeof query);
+		// // res.send(query);
+
+		// let result = await pool.query(insert, values, (err, result) => {
+		// 	if (err) {
+		// 		// console.error('Error inserting data', err);
+		// 		console.log(err);
+		// 		res.send(err);
+		// 	} else {
+		// 		console.log("Account Created Successfully!");
+		// 		const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+		// 			expiresIn: "1h",
+		// 		});
+		// 		res.send(token);
+		// 		// res.json({
+		// 		// 	status: 200,
+		// 		// 	message: "success",
+		// 		// });
+
+		// 		// res.redirect("login");
+		// 		// next();
+		// 	}
+		// });
 	} catch (err) {
 		res.json({
 			status: 400,
@@ -67,33 +85,24 @@ router.post("/register", validateRegistration, async (req, res, next) => {
 	}
 });
 
-router.post("/login", validateLogin, async (req, res) => {
+// router.post("/login", validateLogin, async (req, res) => {
+router.post("/login", async (req, res) => {
 	try {
 		const { email, password } = req.body;
-
 		const insert = table.SELECT_USER;
-		connectDB.connect();
-		const values = [email];
-		console.log("xx", values);
+		let values = [email];
 
-		let validPass = await connectDB.query(insert, values);
-		console.log(validPass.rows);
+		// Connect to pool and execute query
+		const result = await pool.query(insert, values);
 
-		if (validPass.rows.length == 0) {
-			// connectDB.end();
-			return res.send("invalid email or password");
+		if (!result.rows || result.rows.length === 0) {
+			return res.status(401).json({ message: "Invalid email or password" });
 		}
 
-		// return res.json(validPass.rows);
-		const correctPass = await bcrypt.compare(
-			password,
-			validPass.rows[0].password
-		);
+		const user = result.rows[0];
+		const correctPass = await bcrypt.compare(password, user.password);
 
 		if (correctPass) {
-			const infor = await connectDB.query(table.SELECT_USER, [email]);
-			// connectDB.end();
-			const info = infor.rows[0];
 			const token = jwt.sign({ email }, process.env.JWT_SECRET, {
 				expiresIn: "1h",
 			});
@@ -102,42 +111,50 @@ router.post("/login", validateLogin, async (req, res) => {
 				httpOnly: true,
 				maxAge: 1000 * 60 * 60,
 			});
-			res.token = token;
-			console.log("eeee", res.token);
-			res.json({ aa: "aaa", token: token });
-			// res.send("Login Successful");
-			// res.render("profile", { info });
+
+			return res.json({ token });
 		} else {
-			// connectDB.end();
-			res.send("invalid email or password");
+			return res.status(401).json({ message: "Invalid email or password" });
 		}
 	} catch (err) {
-		res.json({
+		res.status(400).json({
 			status: 400,
 			message: err.message,
 		});
 	}
 });
 
-router.post("/update", JWTverification, async (req, res) => {
+// router.post("/profile/update", JWTverification, async (req, res) => {
+router.put("/profile/update", async (req, res) => {
+	console.log("profile update endpoint");
+
 	const { id, action } = req.body;
 	const { userName, email, phoneNo, address } = req.body;
 	if (action == "update") {
-		connectDB.connect().then(() => {
-			connectDB
+		pool.connect().then(() => {
+			pool
 				.query(table.UPDATE_USER, [userName, phoneNo, address, email])
 				.then(res.send("Account detail updated successfully!"));
 		});
 	} else {
 		const del = table.DELETE_USER;
 		const values = [id];
-		connectDB.connect().then(() => {
-			connectDB
+		pool.connect().then(() => {
+			pool
 				// .query("DELETE FROM testUser1 WHERE userid = " + id + ";")
 				.query(del, values)
 				.then(res.send("Account deleted successfully!"));
 		});
 	}
+});
+
+router.delete("/profile/delete", async (req, res) => {
+	const { id } = req.body;
+	const del = table.DELETE_USER;
+	const values = [id];
+	pool.connect().then(() => {
+		pool.query(del, values).then(res.send("Account deleted successfully!"));
+	});
 });
 
 router.post("/forgot", JWTverification, async (req, res) => {
@@ -156,6 +173,21 @@ router.post("/forgot", JWTverification, async (req, res) => {
 	// res.send("aaa");
 });
 
+router.post("/logout", async (req, res) => {
+	try {
+		res.clearCookie("token");
+		return res.status(200).json({
+			status: 200,
+			message: "Logged out successfully",
+		});
+	} catch (err) {
+		return res.status(500).json({
+			status: 500,
+			message: "Error during logout",
+		});
+	}
+});
+
 module.exports = router;
 
 // const insert =
@@ -164,6 +196,7 @@ module.exports = router;
 
 // client.query(insert, values, (err, result) => {
 // 	if (err) {
+
 // 		console.error('Error inserting data', err);
 // 	} else {
 // 		console.log('Data inserted successfully');

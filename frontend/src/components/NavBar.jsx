@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 
@@ -10,11 +10,21 @@ import { faBell } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 import logo from "/logo.png";
 
-import { JWTverification } from "../../../middlewares/verifyJWT";
+// import { JWTverification } from "../../../middlewares/verifyJWT";
 
 const NavBar = () => {
-	const nav = ["Login", "Register"];
-	// const nav = ["Home", "Artists", "Services", "About", "Enquiry"];
+	// useEffect(() =>{
+	// 	const token = localStorage.getItem("token");
+
+	// 	if(token){
+	// 		try{
+	// 			const decoded =
+	// 		}
+	// 	}
+
+	// })
+	// const nav = ["Login", "Register"];
+	const nav = ["Home", "Artists", "Services", "About", "Enquiry"];
 	return (
 		<>
 			<div className="flex justify-around items-center p-2 bg-[#282828] text-white z-50 sticky top-0">

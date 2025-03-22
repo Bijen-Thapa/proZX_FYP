@@ -3,5 +3,14 @@
     "SELECT_USER_Pass": "SELECT * FROM users WHERE email = $1;",
     "SELECT_USER": "SELECT * FROM users WHERE email = $1;",
     "UPDATE_USER": "UPDATE users SET username = $1, phoneno = $2, address = $3 WHERE email = $4;",
-    "DELETE_USER": "DELETE FROM users WHERE userid = $1;"
+    "DELETE_USER": "DELETE FROM users WHERE userid = $1;",
+    "CHECK_ADMIN": "SELECT * FROM admin;",
+    "CREATE_ADMIN": "INSERT INTO admin (adminName, email, phoneno, password) VALUES ($1, $2, $3, $4) RETURNING *;",
+    "SELECT_ADMIN_Pass": "SELECT * FROM admin WHERE email = $1;",
+    "CREATE_AUDIO": "INSERT INTO audio (userID, name, uri, coverPicUrl, description, timestamp) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING audioID",
+    "CREATE_POST": "INSERT INTO content (userID, audioID, caption, vote, visibility, timestamp) VALUES ($1, $2, $3, 0, $4, NOW()) RETURNING contentID",
+    "UPDATE_POST": "UPDATE content SET caption = $1 WHERE contentID = $2 AND userID = $3",
+    "DELETE_POST": "DELETE FROM content WHERE contentID = $1 AND userID = $2",
+    "UPDATE_VOTE": "UPDATE content SET vote = vote + 1 WHERE contentID = $1",
+    "GET_POST": "SELECT c.*, a.* FROM content c LEFT JOIN audio a ON c.audioID = a.audioID WHERE c.contentID = $1"
 }

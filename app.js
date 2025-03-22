@@ -29,7 +29,6 @@ app.use(morgan("dev")); // HTTP request logging
 // app.use(express.json()); // Parse JSON bodies
 // app.use(express.urlencoded({ extended: true })); // Parse URL-encoded data
 
-app.use("/auth", authRoutes); // Authentication routes
 // app.use("/products", productRoutes); // Product routes
 // app.use("/order", orderRoutes); // order routes
 // app.use("/admin", adminActionRoute); // admin routes
@@ -45,6 +44,13 @@ app.use(cookieSet);
 
 // const { send } = require("./middlewares/nodeMailer");
 const { sendMail } = require("./middlewares/sendMail");
+
+// const admin = require("./routes")
+const adminRoute  = require("./routes/adminRoute");
+const paymentRoute = require("./routes/paymentRoute")
+app.use("/auth", authRoutes); // Authentication routes
+app.use("/api/admin", adminRoute);
+app.use("/api/payment", paymentRoute);
 
 app.get("/", async (req, res) => {
 	// res.send(send());

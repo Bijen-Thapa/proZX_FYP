@@ -1,8 +1,8 @@
 CREATE TABLE users (
     userID SERIAL PRIMARY KEY, 
     userName VARCHAR(50) NOT NULL, 
-    email VARCHAR(75) NOT NULL, 
-    phoneNo VARCHAR(10) NOT NULL, 
+    email VARCHAR(75) NOT NULL UNIQUE, 
+    phoneNo VARCHAR(10) NOT NULL UNIQUE, 
     address VARCHAR(75), 
     password TEXT NOT NULL, 
     createdOn DATE DEFAULT (DATE(NOW()))
@@ -118,3 +118,19 @@ CREATE TABLE artist_genres (
     FOREIGN KEY (genreID) REFERENCES genres(genreID) ON DELETE CASCADE
     );
 
+CREATE TABLE admin (
+    adminID SERIAL PRIMARY KEY,
+    adminName VARCHAR(50) NOT NULL,
+    email VARCHAR(75) NOT NULL UNIQUE,
+    phoneNo VARCHAR(10) NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    createdOn DATE DEFAULT (DATE(NOW()))
+);
+CREATE TABLE admin_logs (
+    logID SERIAL PRIMARY KEY,
+    adminID INT NOT NULL,
+    action VARCHAR(100) NOT NULL,
+    date DATE DEFAULT (DATE(NOW())),
+    FOREIGN KEY (adminID) REFERENCES admin(admiinID) ON DELETE CASCADE
+)
+)
