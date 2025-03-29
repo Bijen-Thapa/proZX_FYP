@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const { pool } = require("../config/dbConfig");
+const { pool, connectMongoDB } = require("../config/dbConfig");
 const { JWTverification } = require("../middlewares/verifyJWT");
 const { body, validationResult } = require("express-validator");
 
