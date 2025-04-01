@@ -39,6 +39,7 @@
     "cookie-signature": "^1.0.6",
     "core-util-is": "^1.0.3",
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "debug": "^2.6.9",
     "define-data-property": "^1.1.4",
     "depd": "^2.0.0",
@@ -64,6 +65,7 @@
     "get-intrinsic": "^1.2.4",
     "glob-parent": "^5.1.2",
     "gopd": "^1.0.1",
+    "handlebars": "^4.7.8",
     "has-flag": "^4.0.0",
     "has-property-descriptors": "^1.0.2",
     "has-proto": "^1.0.3",
@@ -167,6 +169,7 @@
     "utils-merge": "^1.0.1",
     "vary": "^1.1.2",
     "waveform-data": "^4.5.1",
+    "wavesurfer.js": "^7.9.4",
     "web-audio-api": "^0.2.2",
     "xtend": "^4.0.2"
   },

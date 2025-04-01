@@ -10,10 +10,17 @@ import Register from "./components/Register";
 import Home from "./pages/Home";
 
 import userProfile from "./components/userProfile";
+import EmailVerification from './components/EmailVerification';
 
-import { Route, Routes } from "react-router-dom";
+// import { Route, Routes } from "react-router-dom";
 
 import { CookiesProvider, useCookies } from "react-cookie";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+// import Navbar from './components/Navbar';
+import Feed from './components/Feed';
+import Profile from './components/Profile';
+import CreatePost from './components/CreatePost';
+import AudioPlayer from './components/AudioPlayer';
 
 function App() {
 	const [cookies, setCookie] = useCookies(['user'])
@@ -39,6 +46,8 @@ function App() {
 					<Route path="/login" element={<Login />} />
 					<Route path="/register" element={<Register />} />
 					<Route path="/userprofile" element={<userProfile />} />
+					<Route path="/verify-email" element={<EmailVerification />} />
+					<Route path="/verify-email/:token" element={<EmailVerification />} />
 					{/* <Route path="/artists" element={<Artist />} />
 				<Route path="/services" element={<Services />} />
 				<Route path="/about" element={<About />} />

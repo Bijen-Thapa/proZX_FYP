@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email - Geet Sansar</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .logo {
+            max-width: 150px;
+            height: auto;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .verification-code {
+            text-align: center;
+            font-size: 32px;
+            letter-spacing: 4px;
+            color: #4F46E5;
+            margin: 20px 0;
+            padding: 10px;
+            background: #f8f8f8;
+            border-radius: 4px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #4F46E5;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+            color: #666666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{logoUrl}}" alt="Geet Sansar" class="logo">
+            <h1>Welcome to Geet Sansar!</h1>
+        </div>
+        
+        <div class="content">
+            <p>Hi {{username}},</p>
+            
+            <p>Thank you for registering with Geet Sansar. To complete your registration, please verify your email address.</p>
+            
+            <p>Your verification code is:</p>
+            <div class="verification-code">{{otp}}</div>
+            
+            <p>Or click the button below to verify your email:</p>
+            <center>
+                <a href="{{verificationLink}}" class="button">Verify Email</a>
+            </center>
+            
+            <p>This verification link and OTP will expire in 24 hours.</p>
+            
+            <p>If you didn't create an account with Geet Sansar, please ignore this email.</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated email, please do not reply.</p>
+            <p>&copy; 2024 Geet Sansar. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
