@@ -7,6 +7,8 @@ const JWTverification = (req, res, next) => {
 
 	try {
 		var decoded = jwt.verify(token, process.env.JWT_SECRET);
+		console.log("decoded token", decoded);
+		
 		req.user = decoded;
 		//   console.log(req.user);
 

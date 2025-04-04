@@ -175,7 +175,8 @@
   },
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "buildDB": "node database/build.js"
   },
   "repository": {
     "type": "git",

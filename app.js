@@ -48,9 +48,12 @@ const { sendMail } = require("./middlewares/sendMail");
 // const admin = require("./routes")
 const adminRoute  = require("./routes/adminRoute");
 const paymentRoute = require("./routes/paymentRoute")
+const postRout = require("./routes/postRoute");
+
 app.use("/auth", authRoutes); // Authentication routes
 app.use("/api/admin", adminRoute);
 app.use("/api/payment", paymentRoute);
+app.use("/api/post", postRout);
 
 app.get("/", async (req, res) => {
 	// res.send(send());

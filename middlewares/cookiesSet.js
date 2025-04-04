@@ -3,7 +3,6 @@ require("dotenv").config();
 
 const cookieSet = async (req, res, next) => {
 	const reCookie = await req.cookies.token;
-	console.log("middle is working:");
 	console.log(reCookie);
 
 	if (!reCookie) {

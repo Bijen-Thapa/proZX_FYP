@@ -125,7 +125,7 @@ router.post("/login", async (req, res) => {
 				{ id: user.userid, email },
 				process.env.JWT_SECRET,
 				{
-					expiresIn: "1h",
+					expiresIn: "24h",
 				}
 			);
 

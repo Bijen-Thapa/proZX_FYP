@@ -10,6 +10,11 @@ const bcrypt = require("bcryptjs");
 // connect to database and check if admin exist or not, if not then create onr
 const { client, pool } = require("./config/dbConfig");
 const { json } = require("express");
+const fs = require("fs");
+
+//Read file and parse it to string
+const sqlQuery = fs.readFileSync("./utils/database.sql", 'utf-8');
+
 
 async function initializeAdmin() {
 	try {
@@ -43,7 +48,10 @@ async function initializeAdmin() {
 // Initialize the database connection and admin check
 pool
 	.connect()
-	.then(() => initializeAdmin())
+	.then(() => {
+		initializeAdmin();
+	
+	})
 	.catch((err) => console.error("Database connection error:", err.message));
 
 const server = http.createServer(app);

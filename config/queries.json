@@ -7,7 +7,7 @@
     "CHECK_ADMIN": "SELECT * FROM admin;",
     "CREATE_ADMIN": "INSERT INTO admin (adminName, email, phoneno, password) VALUES ($1, $2, $3, $4) RETURNING *;",
     "SELECT_ADMIN_Pass": "SELECT * FROM admin WHERE email = $1;",
-    "CREATE_AUDIO": "INSERT INTO audio (userID, name, uri, coverPicUrl, description, timestamp) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING audioID",
+    "CREATE_AUDIO": "INSERT INTO audio (userID, name, uri, coverPicUrl, description, uploadedon) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING audioID",
     "CREATE_POST": "INSERT INTO content (userID, audioID, caption, vote, visibility, timestamp) VALUES ($1, $2, $3, 0, $4, NOW()) RETURNING contentID",
     "UPDATE_POST": "UPDATE content SET caption = $1 WHERE contentID = $2 AND userID = $3",
     "DELETE_POST": "DELETE FROM content WHERE contentID = $1 AND userID = $2",

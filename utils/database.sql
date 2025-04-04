@@ -1,3 +1,5 @@
+BEGIN;
+
 CREATE TABLE users (
     userID SERIAL PRIMARY KEY, 
     userName VARCHAR(50) NOT NULL, 
@@ -133,4 +135,5 @@ CREATE TABLE admin_logs (
     date DATE DEFAULT (DATE(NOW())),
     FOREIGN KEY (adminID) REFERENCES admin(admiinID) ON DELETE CASCADE
 )
-)
+
+COMMIT;
