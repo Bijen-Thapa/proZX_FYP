@@ -20,6 +20,7 @@ const { json } = require("body-parser");
 const table = require("../config/queries.json");
 
 const { JWTverification } = require("../middlewares/verifyJWT");
+const { generateTokens } = require("../middlewares/verifyJWT");
 
 // const { verifyMail } = require("../middlewares/emailVerification");
 const { sendMail } = require("../middlewares/sendMail");
@@ -87,8 +88,7 @@ const {
 // 	}
 // });
 
-// router.post("/login", validateLogin, async (req, res) => {
-router.post("/login", async (req, res) => {
+router.post("/login", validateLogin, async (req, res) => {
 	try {
 		const { email, password } = req.body;
 		const result = await pool.query(table.SELECT_USER, [email]);
@@ -382,3 +382,60 @@ router.post("/register", async (req, res) => {
 		});
 	}
 });
+
+// Add refresh token endpoint
+router.post("/refresh", async (req, res) => {
+	const { refreshToken } = req.cookies;
+
+	if (!refreshToken) {
+		return res.status(401).json({ message: "Refresh token required" });
+	}
+
+	try {
+		// Verify token and check if it's blacklisted
+		const result = await pool.query(
+			"SELECT * FROM refresh_tokens WHERE token = $1 AND blacklisted = FALSE",
+			[refreshToken]
+		);
+
+		if (!result.rows.length) {
+			return res.status(401).json({ message: "Invalid refresh token" });
+		}
+
+		const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+		const { accessToken, refreshToken: newRefreshToken } = await generateTokens(
+			decoded.userId
+		);
+
+		res.cookie("refreshToken", newRefreshToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "strict",
+			maxAge: 7 * 24 * 60 * 60 * 1000,
+		});
+
+		res.json({
+			status: 200,
+			token: accessToken,
+		});
+	} catch (error) {
+		res.status(401).json({ message: "Invalid refresh token" });
+	}
+});
+
+// Add logout endpoint
+router.post("/logout", async (req, res) => {
+	const { refreshToken } = req.cookies;
+
+	if (refreshToken) {
+		await pool.query(
+			"UPDATE refresh_tokens SET blacklisted = TRUE WHERE token = $1",
+			[refreshToken]
+		);
+	}
+
+	res.clearCookie("refreshToken");
+	res.json({ status: 200, message: "Logged out successfully" });
+});
+
+module.exports = router;

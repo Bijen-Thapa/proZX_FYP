@@ -136,4 +136,61 @@ CREATE TABLE admin_logs (
     FOREIGN KEY (adminID) REFERENCES admin(admiinID) ON DELETE CASCADE
 )
 
+CREATE TABLE refresh_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(userid),
+    token VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    blacklisted BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id)
+);
+
+CREATE TABLE content (
+    contentID SERIAL PRIMARY KEY,
+    userID INT NOT NULL,
+    audioID INT,
+    caption TEXT NOT NULL,
+    vote INT DEFAULT 0,
+    visibility VARCHAR(50) NOT NULL,
+    timestamp TIMESTAMP DEFAULT NOW(),
+    FOREIGN KEY (userID) REFERENCES users(userID) ON DELETE CASCADE,
+    FOREIGN KEY (audioID) REFERENCES audios(audioID) ON DELETE CASCADE
+);
+
+
+
+
+CREATE TABLE comments (
+    commentID SERIAL PRIMARY KEY,
+    contentID INTEGER NOT NULL,
+    userID INTEGER NOT NULL,
+    comment_text TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_edited BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (contentID) REFERENCES content(contentID) ON DELETE CASCADE,
+    FOREIGN KEY (userID) REFERENCES users(userID) ON DELETE CASCADE
+);
+
+-- Index for faster comment retrieval
+CREATE INDEX idx_comments_content ON comments(contentID);
+
+
+
+
+CREATE OR REPLACE FUNCTION update_comment_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    NEW.is_edited = TRUE;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER comment_timestamp
+    BEFORE UPDATE ON comments
+    FOR EACH ROW
+    EXECUTE FUNCTION update_comment_timestamp();
+
 COMMIT;

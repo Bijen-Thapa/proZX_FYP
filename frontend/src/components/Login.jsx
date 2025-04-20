@@ -24,7 +24,9 @@ export default function Login() {
             const response = await axios.post("http://localhost:3000/auth/login", formData);
             
             if (response.data.token) {
-                setCookie("user", response.data.token, { path: "/" });
+                // Changed from 'user' to 'token'
+                localStorage.setItem('token', response.data.token);
+                setCookie("token", response.data.token, { path: "/" }); // If you want to keep cookies
                 setAlert({
                     type: "success",
                     message: "Login successful! Redirecting..."

@@ -3,7 +3,7 @@ require("dotenv").config();
 
 const cookieSet = async (req, res, next) => {
 	const reCookie = await req.cookies.token;
-	console.log(reCookie);
+	// console.log(reCookie);
 
 	if (!reCookie) {
 		// 	const secret = process.env.SECRET;
@@ -19,8 +19,8 @@ const cookieSet = async (req, res, next) => {
 		// 	role: "guest",
 		// 	maxAge: 60 * 30,
 		// });
-		await console.log("stat");
-		console.log(reCookie);
+		// await console.log("stat");
+		// console.log(reCookie);
 		next();
 	} else {
 		const token = { id: null, role: "guest" };
@@ -29,7 +29,7 @@ const cookieSet = async (req, res, next) => {
 			maxAge: 60 * 30, // expires in 30 min
 		});
 		await console.log("stat");
-		console.log(reCookie);
+		// console.log(reCookie);
 
 		next();
 	}

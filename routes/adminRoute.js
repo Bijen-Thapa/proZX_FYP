@@ -119,4 +119,38 @@ router.post("/login", async (req, res) => {
 	}
 });
 
+// Artist verification routes
+router.post("/verify-artist/:userID", JWTverification, async (req, res) => {
+    try {
+        const { userID } = req.params;
+        const { status } = req.body; // 'approved' or 'rejected'
+        const adminID = req.user.id;
+
+        // Check if admin
+        const adminCheck = await pool.query(
+            "SELECT role FROM users WHERE userid = $1",
+            [adminID]
+        );
+
+        if (adminCheck.rows[0].role !== 'admin') {
+            return res.status(403).json({ message: "Unauthorized" });
+        }
+
+        await pool.query(
+            `UPDATE artists 
+             SET verification_status = $1, 
+                 verification_date = CURRENT_TIMESTAMP,
+                 verified_by = $2
+             WHERE userID = $3`,
+            [status, adminID, userID]
+        );
+
+        res.json({
+            status: 200,
+            message: `Artist ${status} successfully`
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 module.exports = router;

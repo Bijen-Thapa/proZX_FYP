@@ -13,6 +13,7 @@ import logo from "/logo.png";
 // import { JWTverification } from "../../../middlewares/verifyJWT";
 
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 // const NavBar = () => {
 // 	// useEffect(() =>{
@@ -134,18 +135,24 @@ import { useState } from 'react';
 function Navbar() {
     const [searchQuery, setSearchQuery] = useState('');
     const navigate = useNavigate();
+    const { user, logout } = useAuth();
 
     const handleSearch = (e) => {
         e.preventDefault();
         navigate(`/search?q=${searchQuery}`);
     };
 
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
+    };
+
     return (
-        <nav className="bg-white shadow-md">
+        <nav className="bg-[#282828] shadow-md">
             <div className="max-w-6xl mx-auto px-4">
                 <div className="flex justify-between items-center h-16">
-                    <Link to="/" className="text-xl font-bold">
-                        Geet Sansar
+                    <Link to="/" className="flex items-center">
+                        <img src={logo} alt="Geet Sansar" className="w-12 invert" />
                     </Link>
 
                     <form onSubmit={handleSearch} className="flex-1 max-w-md mx-4">
@@ -159,15 +166,65 @@ function Navbar() {
                     </form>
 
                     <div className="flex items-center gap-4">
-                        <Link 
-                            to="/create" 
-                            className="bg-blue-600 text-white px-4 py-2 rounded-full"
-                        >
-                            Upload
-                        </Link>
-                        <Link to="/profile/me" className="w-8 h-8 rounded-full bg-gray-200">
-                            {/* Profile picture */}
-                        </Link>
+                        {user ? (
+                            <>
+                                {user.isArtist && (
+                                    <Link 
+                                        to="/create" 
+                                        className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700"
+                                    >
+                                        Upload
+                                    </Link>
+                                )}
+                                
+                                <Menu as="div" className="relative">
+                                    <MenuButton className="flex items-center space-x-2">
+                                        <img
+                                            src={user.profilePic || "https://via.placeholder.com/32"}
+                                            alt={user.username}
+                                            className="w-8 h-8 rounded-full"
+                                        />
+                                        <span className="text-white">{user.username}</span>
+                                    </MenuButton>
+                                    
+                                    <MenuItems className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
+                                        <MenuItem>
+                                            <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                Profile
+                                            </Link>
+                                        </MenuItem>
+                                        <MenuItem>
+                                            <Link to="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                Settings
+                                            </Link>
+                                        </MenuItem>
+                                        <MenuItem>
+                                            <button
+                                                onClick={handleLogout}
+                                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            >
+                                                Sign out
+                                            </button>
+                                        </MenuItem>
+                                    </MenuItems>
+                                </Menu>
+                            </>
+                        ) : (
+                            <div className="space-x-4">
+                                <Link 
+                                    to="/login" 
+                                    className="text-white hover:text-gray-300"
+                                >
+                                    Login
+                                </Link>
+                                <Link 
+                                    to="/register" 
+                                    className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700"
+                                >
+                                    Sign Up
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

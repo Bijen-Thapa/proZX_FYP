@@ -13,8 +13,8 @@ const { json } = require("express");
 const fs = require("fs");
 
 //Read file and parse it to string
-const sqlQuery = fs.readFileSync("./utils/database.sql", 'utf-8');
-
+// const sqlQuery = fs.readFileSync("./utils/database.sql", 'utf-8');
+// implemented the database setup via script "npm run buildDB"
 
 async function initializeAdmin() {
 	try {

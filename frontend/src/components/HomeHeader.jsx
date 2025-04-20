@@ -58,24 +58,12 @@ function HomeHeader() {
 	return (
 		<Component>
 			<section
-				class=" w-full overflow-hidden flex items-center  text-white px-16 max-sm:px-6  "
-				onClick={() => {
-					const video = document.getElementById("bgVideo");
-					if (video.paused) {
-						video.play();
-						document.getElementById("pauseIcon").removeAttribute("hidden");
-						document.getElementById("playIcon").hidden = "true";
-					} else {
-						video.pause();
-						document.getElementById("playIcon").removeAttribute("hidden");
-						document.getElementById("pauseIcon").hidden = "true";
-					}
-				}}
+				className="relative w-full overflow-hidden flex items-center text-white px-16 max-sm:px-6" // Added mt-16 and relative
 			>
 				<VideoContainer>
 					<video
 						id="bgVideo"
-						class="absolute inset-0 w-full h-full object-cover"
+						className="fixed inset-0 w-full h-full object-cover -z-10" // Changed to fixed and added z-index
 						autoPlay
 						loop
 						height="auto"
@@ -86,13 +74,12 @@ function HomeHeader() {
 					</video>
 				</VideoContainer>
 				<div
-					class="absolute inset-0  bg-gradient-to-r from-gray-950 to-transparent "
-					// style=[background: linear-gradient(to right, rgba(0, 0, 0, 0.9), rgba(255, 255, 255, 0));}
+					className="absolute inset-0 bg-gradient-to-r from-gray-950 to-transparent -z-5 h-[100vh]" // Added z-index
 				></div>
 
 				<br />
 				<br />
-				<div class=" relative z-10  px-30 max-sm:flex-col max-sm:  pt-12 w-full items-normal">
+				<div class=" relative z-10  px-30 max-sm:flex-col max-sm:   w-full items-normal">
 					<h1 class="text-7xl  max-sm:text-3xl font-extrabold leading-tight fade-in  ">
 						Lorem <br /> Lorem ipsum 
 					</h1>

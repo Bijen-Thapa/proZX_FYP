@@ -11,7 +11,9 @@ const authRoutes = require("./routes/authRoute");
 // const { authenticateJWT } = require("./middleware/authMiddleware");
 const app = express();
 const cookieParser = require("cookie-parser");
-const cors = require("cors");
+const cors = require('cors');
+const userRoute = require('./routes/userRoute');
+
 app.use(cookieParser());
 
 dotenv.config();
@@ -20,7 +22,23 @@ app.set("view engine", "ejs");
 
 app.use(express.static("views"));
 
-app.use(cors()); // cors enables ports to communicate with each other
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+        'Content-Type', 
+        'Authorization', 
+        'X-Access-Token',
+        'Access-Control-Allow-Credentials',
+        'Access-Control-Allow-Origin',
+        'Origin',
+        'Accept'
+    ],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    preflightContinue: true,
+    optionsSuccessStatus: 204
+})); // cors enables ports to communicate with each other
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -46,33 +64,43 @@ app.use(cookieSet);
 const { sendMail } = require("./middlewares/sendMail");
 
 // const admin = require("./routes")
-const adminRoute  = require("./routes/adminRoute");
-const paymentRoute = require("./routes/paymentRoute")
+const adminRoute = require("./routes/adminRoute");
+const paymentRoute = require("./routes/paymentRoute");
 const postRout = require("./routes/postRoute");
+const { message } = require("statuses");
+const status=require("statuses");
 
 app.use("/auth", authRoutes); // Authentication routes
 app.use("/api/admin", adminRoute);
 app.use("/api/payment", paymentRoute);
 app.use("/api/post", postRout);
+app.use("/api/user", userRoute); // Add this line
+// Add this before your routes
+app.options('*', cors()); // Enable preflight for all routes
 
 app.get("/", async (req, res) => {
 	// res.send(send());
-	res.render("forgot");
+	// res.render("forgot");
+	res.json({
+		status: 200,
+		message: "Hello world from the Backend!",
+	});
 });
 
-app.get("/login", (req, res) => {
-	res.render("login");
-});
+// app.get("/login", (req, res) => {
+// 	res.render("login");
+// });
 
-app.get("/signup", (req, res) => {
-	res.render("registration");
-});
+// app.get("/signup", (req, res) => {
+// 	res.render("registration");
+// });
 
-app.get("/forgot", (req, res) => {
-	res.render("forgot");
-});
-app.get("/test", (req, res) => {
-	res.json("testing123");
-});
+// app.get("/forgot", (req, res) => {
+// 	res.render("forgot");
+// });
+// app.get("/test", (req, res) => {
+// 	res.json("testing123");
+// });
 
 module.exports = app;
+

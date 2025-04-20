@@ -11,7 +11,7 @@ const NodeID3 = require("node-id3");
 const fs = require("fs").promises;
 const WaveformData = require("waveform-data");
 const { message } = require("statuses");
-
+const table = require("../config/queries.json");
 
 // Configure ffmpeg
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
@@ -60,22 +60,42 @@ router.get("/", JWTverification, async (req, res) => {
 	});
 });
 
-
 // Create post
 router.post(
 	"/create",
 	JWTverification,
 	upload.single("audio"),
 	async (req, res) => {
-		console.log("in post lol");
-
 		try {
+			console.log("in post content");
 			const { title, description, caption, visibility } = req.body;
+
 			const userID = req.user.id; // Assuming JWTverification middleware adds user to req
+
+			// Check if premium content is allowed for this user
+			if (visibility === "premium") {
+				const artistCheck = await pool.query(
+					"SELECT verification_status FROM artists WHERE userID = $1",
+					[userID]
+				);
+
+				if (
+					!artistCheck.rows.length ||
+					artistCheck.rows[0].verification_status !== "approved"
+				) {
+					return res.status(403).json({
+						message: "Only verified artists can post premium content",
+					});
+				}
+			}
+
 			let audioPath = null;
 			let metadata = {};
 
+			// console.log("post content req", req);
+
 			if (req.file) {
+				console.log("audio post");
 				audioPath = req.file.path;
 				const ext = path.extname(req.file.originalname).toLowerCase();
 
@@ -106,10 +126,12 @@ router.post(
 					description,
 				]);
 
+				console.log("audioId ko", audioResult);
+				
 				// Create content entry with audio
 				const contentResult = await pool.query(table.CREATE_POST, [
 					userID,
-					audioResult.rows[0].audioID,
+					audioResult.rows[0].audioid,
 					caption,
 					visibility,
 				]);
@@ -117,9 +139,11 @@ router.post(
 				res.json({
 					status: 200,
 					message: "Post created successfully",
-					contentID: contentResult.rows[0].contentID,
+					postID: contentResult.rows[0].postID,
 				});
 			} else {
+				console.log("caption post");
+
 				// Create content entry without audio (text-only post)
 				const contentResult = await pool.query(table.CREATE_POST, [
 					userID,
@@ -267,81 +291,6 @@ router.get("/stream/:audioID", async (req, res) => {
 	}
 });
 
-// Enhance create post with metadata extraction
-// router.post('/create', JWTverification, upload.single('audio'), async (req, res) => {
-//     try {
-//         const { title, description, caption, visibility } = req.body;
-//         const userID = req.user.id;
-//         let audioPath = null;
-//         let metadata = {};
-
-//         if (req.file) {
-//             audioPath = req.file.path;
-//             const ext = path.extname(req.file.originalname).toLowerCase();
-
-//             // Extract metadata from audio file
-//             metadata = await mm.parseFile(audioPath);
-
-//             // Convert video if needed
-//             if (ext === '.mp4') {
-//                 const outputPath = audioPath.replace('.mp4', '.mp3');
-//                 audioPath = await convertToAudio(audioPath, outputPath);
-//             }
-
-//             // Write ID3 tags
-//             const tags = {
-//                 title: title || metadata.common.title,
-//                 artist: metadata.common.artist,
-//                 album: metadata.common.album,
-//                 description: description
-//             };
-//             NodeID3.write(tags, audioPath);
-
-//             // Create audio entry with metadata
-//             const audioResult = await pool.query(table.CREATE_AUDIO, [
-//                 userID,
-//                 title || metadata.common.title,
-//                 audioPath,
-//                 req.body.coverPicUrl || null,
-//                 description,
-//             ]);
-
-//             // Create content entry with audio
-//             const contentResult = await pool.query(table.CREATE_POST, [
-//                 userID,
-//                 audioResult.rows[0].audioID,
-//                 caption,
-//                 visibility
-//             ]);
-
-//             res.json({
-//                 status: 200,
-//                 message: 'Post created successfully',
-//                 contentID: contentResult.rows[0].contentID
-//             });
-//         } else {
-//             // Create content entry without audio (text-only post)
-//             const contentResult = await pool.query(table.CREATE_POST, [
-//                 userID,
-//                 null,
-//                 caption,
-//                 visibility
-//             ]);
-
-//             res.json({
-//                 status: 200,
-//                 message: 'Text post created successfully',
-//                 contentID: contentResult.rows[0].contentID
-//             });
-//         }
-//     } catch (error) {
-//         res.status(500).json({
-//             status: 500,
-//             message: error.message
-//         });
-//     }
-// });
-
 // Add route to get audio metadata
 router.get("/metadata/:audioID", async (req, res) => {
 	try {
@@ -391,93 +340,6 @@ async function generateWaveform(audioPath) {
 	});
 }
 
-// Add waveform generation to create post route
-// router.post('/create', JWTverification, upload.single('audio'), async (req, res) => {
-//     try {
-//         const { title, description, caption, visibility } = req.body;
-//         const userID = req.user.id;
-//         let audioPath = null;
-//         let metadata = {};
-
-//         if (req.file) {
-//             audioPath = req.file.path;
-//             const ext = path.extname(req.file.originalname).toLowerCase();
-
-//             // Extract metadata from audio file
-//             metadata = await mm.parseFile(audioPath);
-
-//             // Convert video if needed
-//             if (ext === '.mp4') {
-//                 const outputPath = audioPath.replace('.mp4', '.mp3');
-//                 audioPath = await convertToAudio(audioPath, outputPath);
-//             }
-
-//             // Write ID3 tags
-//             const tags = {
-//                 title: title || metadata.common.title,
-//                 artist: metadata.common.artist,
-//                 album: metadata.common.album,
-//                 description: description
-//             };
-//             NodeID3.write(tags, audioPath);
-
-//             // Create audio entry with metadata
-//             const audioResult = await pool.query(table.CREATE_AUDIO, [
-//                 userID,
-//                 title || metadata.common.title,
-//                 audioPath,
-//                 req.body.coverPicUrl || null,
-//                 description,
-//             ]);
-
-//             // Create content entry with audio
-//             const contentResult = await pool.query(table.CREATE_POST, [
-//                 userID,
-//                 audioResult.rows[0].audioID,
-//                 caption,
-//                 visibility
-//             ]);
-
-//             res.json({
-//                 status: 200,
-//                 message: 'Post created successfully',
-//                 contentID: contentResult.rows[0].contentID
-//             });
-//         } else {
-//             // Create content entry without audio (text-only post)
-//             const contentResult = await pool.query(table.CREATE_POST, [
-//                 userID,
-//                 null,
-//                 caption,
-//                 visibility
-//             ]);
-
-//             res.json({
-//                 status: 200,
-//                 message: 'Text post created successfully',
-//                 contentID: contentResult.rows[0].contentID
-//             });
-//         }
-
-//         // Generate waveform data
-//         const waveformData = await generateWaveform(audioPath);
-
-//         // Add waveform data to audio entry
-//         await pool.query('UPDATE audio SET waveform = $1 WHERE audioID = $2',
-//             [JSON.stringify(waveformData), audioResult.rows[0].audioID]);
-
-//         res.json({
-//             status: 200,
-//             message: 'Post created successfully',
-//             contentID: contentResult.rows[0].contentID
-//         });
-//     } catch (error) {
-//         res.status(500).json({
-//             status: 500,
-//             message: error.message
-//         });
-//     }
-// });
 
 // Get waveform data
 router.get("/waveform/:audioID", async (req, res) => {
@@ -690,39 +552,76 @@ router.post("/repost/:contentID", JWTverification, async (req, res) => {
 	}
 });
 
-// Get user's feed (posts, reposts, and followed users' content)
-router.get("/feed", JWTverification, async (req, res) => {
-	try {
-		const userID = req.user.id;
-		const feed = await pool.query(
-			`
+// Get public feed (non-premium, non-private posts)
+router.get("/feed", async (req, res) => {
+    try {
+        const feed = await pool.query(`
             SELECT 
-                c.*, 
-                a.name as audio_name, 
-                a.uri as audio_uri,
+                c.contentID,
+                c.caption,
+                c.visibility,
+                c.timestamp,
+                c.vote as vote_count,
+                a.audioID,
+                a.title,
+                a.description,
+                a.uri as audio_url,
+                a.cover_pic_url,
+                u.userID,
                 u.username,
-                r.userID as reposted_by,
-                ru.username as reposter_name
+                u.profile_pic_url,
+                COUNT(cm.commentID) as comment_count
             FROM content c
             LEFT JOIN audio a ON c.audioID = a.audioID
             JOIN users u ON c.userID = u.userID
-            LEFT JOIN reposts r ON c.contentID = r.original_contentID
-            LEFT JOIN users ru ON r.userID = ru.userID
-            WHERE c.userID = $1 
-                OR c.userID IN (SELECT followed_id FROM follows WHERE follower_id = $1)
-                OR r.userID = $1
-            ORDER BY c.timestamp DESC`,
-			[userID]
-		);
+            LEFT JOIN comments cm ON c.contentID = cm.contentID
+            WHERE c.visibility = 'public'
+            GROUP BY c.contentID, a.audioID, u.userID
+            ORDER BY c.timestamp DESC
+        `);
 
-		res.json({
-			status: 200,
-			feed: feed.rows,
-		});
-	} catch (error) {
-		res.status(500).json({ message: error.message });
-	}
+        res.json({
+            status: 200,
+            feed: feed.rows
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 });
+
+// Get user's feed (posts, reposts, and followed users' content)
+// router.get("/feed", JWTverification, async (req, res) => {
+// 	try {
+// 		const userID = req.user.id;
+// 		const feed = await pool.query(
+// 			`
+//             SELECT 
+//                 c.*, 
+//                 a.name as audio_name, 
+//                 a.uri as audio_uri,
+//                 u.username,
+//                 r.userID as reposted_by,
+//                 ru.username as reposter_name
+//             FROM content c
+//             LEFT JOIN audio a ON c.audioID = a.audioID
+//             JOIN users u ON c.userID = u.userID
+//             LEFT JOIN reposts r ON c.contentID = r.original_contentID
+//             LEFT JOIN users ru ON r.userID = ru.userID
+//             WHERE c.userID = $1 
+//                 OR c.userID IN (SELECT followed_id FROM follows WHERE follower_id = $1)
+//                 OR r.userID = $1
+//             ORDER BY c.timestamp DESC`,
+// 			[userID]
+// 		);
+
+// 		res.json({
+// 			status: 200,
+// 			feed: feed.rows,
+// 		});
+// 	} catch (error) {
+// 		res.status(500).json({ message: error.message });
+// 	}
+// });
 
 // Audio processing - Adjust volume
 router.post(

@@ -1,31 +1,58 @@
-var jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
+const { pool } = require("../config/dbConfig");
 require("dotenv").config();
 
+const generateTokens = async (userId) => {
+	const accessToken = jwt.sign(
+		{ userId },
+		process.env.JWT_SECRET,
+		{ expiresIn: "1d" } // TODO: change expiration to 1h
+	);
+
+	const refreshToken = jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET, {
+		expiresIn: "7d",
+	});
+
+	// Store refresh token in database (replace if exists)
+	await pool.query(
+		`
+        INSERT INTO refresh_tokens (user_id, token, expires_at)
+        VALUES ($1, $2, NOW() + INTERVAL '7 days')
+        ON CONFLICT (user_id)
+        DO UPDATE SET 
+            token = EXCLUDED.token,
+            expires_at = EXCLUDED.expires_at,
+            blacklisted = FALSE
+    `,
+		[userId, refreshToken]
+	);
+
+	return { accessToken, refreshToken };
+};
+
 const JWTverification = (req, res, next) => {
-	let token = req.headers.authorization?.replace("Bearer ", "");
-	let isloggedIn = false;
+	const accessToken = req.headers.authorization?.replace("Bearer ", "");
+
+	if (!accessToken) {
+		return res.status(401).json({ message: "Access token required" });
+	}
 
 	try {
-		var decoded = jwt.verify(token, process.env.JWT_SECRET);
-		console.log("decoded token", decoded);
-		
+		const decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
 		req.user = decoded;
-		//   console.log(req.user);
-
-		isloggedIn = true;
-	} catch {}
-
-	if (isloggedIn) {
 		next();
-	} else {
-		res.status(401).send({
-			msg: "Unauthorized",
-		});
+	} catch (error) {
+		if (error.name === "TokenExpiredError") {
+			return res.status(401).json({
+				message: "Token expired",
+				code: "TOKEN_EXPIRED",
+			});
+		}
+		return res.status(401).json({ message: "Invalid token" });
 	}
 };
 
-
-
 module.exports = {
 	JWTverification,
+	generateTokens,
 };
