@@ -153,4 +153,61 @@ router.post("/verify-artist/:userID", JWTverification, async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+// Add this endpoint
+router.get("/verify", JWTverification, async (req, res) => {
+    try {
+        const { email } = req.user;
+        const result = await pool.query(
+            "SELECT adminid, adminname, email, is_active FROM admin WHERE email = $1",
+            [email]
+        );
+
+        if (!result.rows[0] || !result.rows[0].is_active) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        res.json({
+            admin: result.rows[0]
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Update login endpoint to include admin data
+router.post("/login", async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const result = await pool.query(
+            "SELECT * FROM admin WHERE email = $1 AND is_active = true",
+            [email]
+        );
+
+        if (!result.rows[0]) {
+            return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        const admin = result.rows[0];
+        const correctPass = await bcrypt.compare(password, admin.password);
+
+        if (correctPass) {
+            const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+                expiresIn: "30m" // Changed to 30 minutes
+            });
+
+            // Remove sensitive data
+            delete admin.password;
+
+            return res.json({ 
+                token,
+                admin
+            });
+        }
+
+        return res.status(401).json({ message: "Invalid email or password" });
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
 module.exports = router;

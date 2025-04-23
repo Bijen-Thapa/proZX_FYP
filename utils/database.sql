@@ -15,7 +15,7 @@ CREATE TABLE audios (
     userID INT NOT NULL, 
     Name VARCHAR(50) NOT NULL, 
     uri TEXT NOT NULL, 
-    cover_pic_uir TEXT, 
+    cover_pic_url TEXT, 
     description TEXT,  
     uploadedOn DATE DEFAULT (DATE(NOW())), 
     FOREIGN KEY (userID) REFERENCES users(userID) ON DELETE CASCADE
@@ -126,6 +126,7 @@ CREATE TABLE admin (
     email VARCHAR(75) NOT NULL UNIQUE,
     phoneNo VARCHAR(10) NOT NULL UNIQUE,
     password TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT true,
     createdOn DATE DEFAULT (DATE(NOW()))
 );
 CREATE TABLE admin_logs (
@@ -193,4 +194,39 @@ CREATE TRIGGER comment_timestamp
     FOR EACH ROW
     EXECUTE FUNCTION update_comment_timestamp();
 
+
+CREATE TABLE profiles (
+    profileid SERIAL PRIMARY KEY,
+    userid INTEGER REFERENCES users(userid),
+    about TEXT,
+    pic_url TEXT,
+    facebook_url TEXT,
+    instagram_url TEXT,
+    twitter_url TEXT,
+    soundcloud_url TEXT,
+    youtube_url TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- Create follows table
+CREATE TABLE follows (
+    follow_id SERIAL PRIMARY KEY,
+    follower_id INTEGER REFERENCES users(userid),
+    followed_id INTEGER REFERENCES users(userid),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(follower_id, followed_id)
+);
+
+-- Create notifications table
+CREATE TABLE notifications (
+    notification_id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(userid),
+    type VARCHAR(50) NOT NULL,
+    content TEXT NOT NULL,
+    related_id INTEGER,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 COMMIT;

@@ -14,13 +14,19 @@ export function AuthProvider({ children }) {
 
     const checkAuthStatus = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = await window.localStorage.getItem('token');
+            const lol = await window.localStorage.getItem('lol');
+            console.log('Checking auth status, token:', token);
+            console.log('Checking auth status, lol:', lol);
             
             if (token) {
+                api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 const response = await api.get('/api/auth/verify');
+                console.log('Auth verification response:', response.data);
                 setUser(response.data.user);    
             }
         } catch (err) {
+            console.error('Auth check error:', err);
             localStorage.removeItem('token');
             localStorage.removeItem('refreshToken');
             setUser(null);
@@ -37,11 +43,14 @@ export function AuthProvider({ children }) {
             });
             const { token, refreshToken, user } = response.data;
             
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             localStorage.setItem('token', token);
             localStorage.setItem('refreshToken', refreshToken);
             setUser(user);
+            console.log('Login successful, user:', user);
             return true;
         } catch (err) {
+            console.error('Login error:', err);
             setError(err.response?.data?.message || 'Login failed');
             return false;
         }

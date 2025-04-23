@@ -126,7 +126,7 @@ router.post(
 					description,
 				]);
 
-				console.log("audioId ko", audioResult);
+				// console.log("audioId ko", audioResult);
 				
 				// Create content entry with audio
 				const contentResult = await pool.query(table.CREATE_POST, [
@@ -555,6 +555,44 @@ router.post("/repost/:contentID", JWTverification, async (req, res) => {
 // Get public feed (non-premium, non-private posts)
 router.get("/feed", async (req, res) => {
     try {
+        const { page = 1, limit = 5 } = req.query;
+        const offset = (page - 1) * limit;
+        
+        // const feed = await pool.query(`
+        //     SELECT 
+        //         c.contentID,
+        //         c.caption,
+        //         c.visibility,
+        //         c.timestamp,
+        //         c.vote as vote_count,
+        //         a.audioID,
+        //         a.name as title,
+        //         a.description,
+        //         a.uri as audio_url,
+        //         a.cover_pic_url,
+        //         u.userID,
+        //         u.username,
+        //         u.profile_pic_url,
+        //         COUNT(cm.commentid) as comment_count,
+        //         CASE 
+        //             WHEN f.follower_id IS NOT NULL THEN true 
+        //             ELSE false 
+        //         END as is_following
+        //     FROM content c
+        //     LEFT JOIN audio a ON c.audioID = a.audioID
+        //     JOIN users u ON c.userID = u.userID
+        //     LEFT JOIN comments cm ON c.contentID = cm.contentID
+        //     LEFT JOIN follows f ON c.userID = f.followed_id AND f.follower_id = $1
+        //     WHERE c.visibility = 'public' 
+        //         OR (c.visibility = 'private' AND f.follower_id IS NOT NULL)
+        //     GROUP BY 
+        //         c.contentID, 
+        //         a.audioID, 
+        //         u.userID,
+        //         f.follower_id
+        //     ORDER BY c.timestamp DESC
+        //     LIMIT $2 OFFSET $3
+        // `, [req.user?.id || null, limit, offset]);
         const feed = await pool.query(`
             SELECT 
                 c.contentID,
@@ -563,26 +601,40 @@ router.get("/feed", async (req, res) => {
                 c.timestamp,
                 c.vote as vote_count,
                 a.audioID,
-                a.title,
+                a.name as title,
                 a.description,
                 a.uri as audio_url,
                 a.cover_pic_url,
                 u.userID,
                 u.username,
-                u.profile_pic_url,
-                COUNT(cm.commentID) as comment_count
+                u.profile_picture_url,
+                COUNT(cm.commentid) as comment_count,
+                CASE 
+                    WHEN f.follower_id IS NOT NULL THEN true 
+                    ELSE false 
+                END as is_following
             FROM content c
-            LEFT JOIN audio a ON c.audioID = a.audioID
+            LEFT JOIN audios a ON c.audioID = a.audioID
             JOIN users u ON c.userID = u.userID
             LEFT JOIN comments cm ON c.contentID = cm.contentID
-            WHERE c.visibility = 'public'
-            GROUP BY c.contentID, a.audioID, u.userID
+            LEFT JOIN follows f ON c.userID = f.followed_id AND f.follower_id = $1
+            WHERE c.visibility = 'public' 
+                OR (c.visibility = 'private' AND f.follower_id IS NOT NULL)
+            GROUP BY 
+                c.contentID, 
+                a.audioID, 
+                u.userID,
+                f.follower_id
             ORDER BY c.timestamp DESC
-        `);
+            LIMIT $2 OFFSET $3
+        `, [req.user?.id || null, limit, offset]);
 
+		// console.log("feed haita", feed);
+		
         res.json({
             status: 200,
-            feed: feed.rows
+            feed: feed.rows,
+            hasMore: feed.rows.length === limit
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

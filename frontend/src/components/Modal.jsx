@@ -29,7 +29,7 @@ export function Modal({ isOpen, onClose, title, children }) {
                     onClick={onClose}
                 ></div>
 
-                <div className="relative bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full mx-auto p-6 shadow-xl">
+                <div className="relative bg-white dark:bg-gray-300 rounded-lg max-w-lg w-full mx-auto p-6 shadow-xl">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                             {title}

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/dbConfig");
 const { JWTverification } = require("../middlewares/verifyJWT");
+const { message } = require("statuses");
 
 // Check if user is an artist
 router.get("/isArtist/:userId", JWTverification, async (req, res) => {
@@ -57,6 +58,38 @@ router.put("/profile", JWTverification, async (req, res) => {
 	} catch (error) {
 		console.error("Error updating profile:", error);
 		res.status(500).json({ message: "Server error" });
+	}
+});
+
+// Add this new endpoint
+router.get("/getid", JWTverification, async (req, res) => {
+	try {
+		console.log("in api/user/getid");
+		
+		// const { username } = req.params;
+		const result = await pool.query(
+			"SELECT userid FROM users WHERE userid = $1",
+			[req.user.id]
+		);
+		console.log("getId endpoint", result);
+
+		if (!result.rows.length) {
+			return res.status(404).json({ message: "User not found" });
+		}
+		console.log("req ko id", req.user["id"]);
+		console.log("db bata aako id", result.rows[0].userid);
+
+		if (req.user["id"] !== result.rows[0].userid) {
+			return res.status(400).json({
+				message: "invalid access",
+			});
+		}
+		res.json({
+			status: 200,
+			userid: result.rows[0].userid,
+		});
+	} catch (error) {
+		res.status(500).json({ message: error.message });
 	}
 });
 
